@@ -1,426 +1,611 @@
-const form = document.querySelector("#briefing-form");
-const steps = [...document.querySelectorAll(".step")];
-
-const nextButton = document.querySelector("#next-button");
-const backButton = document.querySelector("#back-button");
-
-const progressBar = document.querySelector("#progress-bar");
-const progressCount = document.querySelector("#progress-count");
-const stepLabel = document.querySelector("#step-label");
-
-const successPanel = document.querySelector("#success-panel");
-const loadingPanel = document.querySelector("#loading-panel");
-
-const themeToggle = document.querySelector("#theme-toggle");
-const otherProjectField = document.querySelector("#other-project-field");
-
-let currentStep = 0;
-let submitting = false;
-
-function getFieldError() {
-return steps[currentStep].querySelector(".field-error");
-}
-
-function clearCurrentError() {
-const error = getFieldError();
-
-if (error) {
-error.textContent = "";
-}
-}
-
-function showError(message) {
-const error = getFieldError();
-
-if (error) {
-error.textContent = message;
-}
-}
-
-function getCheckedValues(name) {
-return [...form.querySelectorAll(`input[name="${name}"]:checked`)]
-.map((input) => input.value);
-}
-
-function validateStep() {
-clearCurrentError();
-
-const step = steps[currentStep];
-
-if (currentStep === 0) {
-const company = form.elements.company;
-const name = form.elements.name;
 
 
-if (!company.value.trim()) {
-  showError("Informe o nome da empresa para continuar.");
-  company.focus();
-  return false;
-}
+const TOTAL_STEPS = 6;
 
-if (!name.value.trim()) {
-  showError("Informe seu nome para continuar.");
-  name.focus();
-  return false;
-}
+let currentStep = 1;
 
+const form = document.getElementById("briefingForm");
 
-}
-
-if (currentStep === 1) {
-const selected = form.querySelector(
-'input[name="projectType"]:checked'
+const steps = Array.from(
+  document.querySelectorAll(".form-step")
 );
 
+const currentStepLabel =
+  document.getElementById("currentStepLabel");
 
-if (!selected) {
-  showError("Escolha o tipo de projeto para continuar.");
-  return false;
-}
+const progressPercent =
+  document.getElementById("progressPercent");
 
+const progressFill =
+  document.getElementById("progressFill");
 
-}
+const themeToggle =
+  document.getElementById("themeToggle");
 
-if (currentStep === 2) {
-const goals = getCheckedValues("goals");
+const loadingPanel =
+  document.getElementById("loadingPanel");
 
+const successPanel =
+  document.getElementById("successPanel");
 
-if (!goals.length) {
-  showError("Escolha pelo menos um objetivo.");
-  return false;
-}
+const projectOtherWrapper =
+  document.getElementById("projectOtherWrapper");
 
+const projectOther =
+  document.getElementById("projectOther");
 
-}
 
-if (currentStep === 3) {
-const presence = form.querySelector(
-'input[name="presence"]:checked'
-);
+/* =========================================================
+   THEME
+========================================================= */
 
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
 
-if (!presence) {
-  showError("Escolha a opção que melhor representa seu momento.");
-  return false;
-}
-
-}
-
-if (currentStep === 4) {
-const timeline = form.elements.timeline;
-const budget = form.elements.budget;
-
-
-if (!timeline.value || !budget.value) {
-  showError(
-    "Selecione o prazo e a faixa de investimento para continuar."
-  );
-  return false;
-}
-
-
-}
-
-if (currentStep === 5) {
-const email = form.elements.email;
-const phone = form.elements.phone;
-const consent = form.elements.contactConsent;
-
-
-if (!email.value.trim()) {
-  showError("Informe seu e-mail.");
-  email.focus();
-  return false;
-}
-
-if (!email.validity.valid) {
-  showError("Confira o e-mail informado.");
-  email.focus();
-  return false;
-}
-
-if (!phone.value.trim()) {
-  showError("Informe seu WhatsApp.");
-  phone.focus();
-  return false;
-}
-
-if (!consent.checked) {
-  showError(
-    "Autorize o contato para enviar o briefing."
-  );
-  consent.focus();
-  return false;
-}
-
-
-}
-
-return true;
-}
-
-function updateStep(direction = 0) {
-steps.forEach((step, index) => {
-const active = index === currentStep;
-
-
-step.hidden = !active;
-step.classList.toggle("is-active", active);
-
-
-});
-
-const total = steps.length;
-const percent = ((currentStep + 1) / total) * 100;
-
-progressBar.style.width = `${percent}%`;
-
-progressCount.textContent =
-`${String(currentStep + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
-
-stepLabel.textContent =
-`${String(currentStep + 1).padStart(2, "0")} — ${steps[currentStep].dataset.label}`;
-
-backButton.hidden = currentStep === 0;
-
-nextButton.innerHTML =
-currentStep === total - 1
-? 'Enviar briefing <span aria-hidden="true">↗</span>'
-: 'Continuar <span aria-hidden="true">↗</span>';
-
-if (direction) {
-const firstInput = steps[currentStep].querySelector(
-"input:not([type='hidden']), select, textarea"
-);
-
-
-firstInput?.focus();
-
-
-}
-
-window.scrollTo({
-top: 0,
-behavior: "smooth"
-});
-}
-
-function getFormData() {
-const data = new FormData(form);
-
-const projectType = data.get("projectType");
-
-return {
-source: "pereda-dev-briefing",
-version: 1,
-
-
-submittedAt: new Date().toISOString(),
-
-business: {
-  company: String(data.get("company") || "").trim(),
-  segment: String(data.get("segment") || "").trim(),
-  location: String(data.get("location") || "").trim(),
-  description: String(
-    data.get("businessDescription") || ""
-  ).trim(),
-},
-
-contact: {
-  name: String(data.get("name") || "").trim(),
-  email: String(data.get("email") || "").trim(),
-  phone: String(data.get("phone") || "").trim(),
-},
-
-project: {
-  type: String(projectType || ""),
-  other: String(data.get("projectOther") || "").trim(),
-  goals: getCheckedValues("goals"),
-},
-
-digitalPresence: {
-  status: String(data.get("presence") || ""),
-  website: String(data.get("website") || "").trim(),
-  instagram: String(data.get("instagram") || "").trim(),
-  audience: String(data.get("audience") || "").trim(),
-},
-
-context: {
-  timeline: String(data.get("timeline") || ""),
-  budget: String(data.get("budget") || ""),
-  materials: getCheckedValues("materials"),
-},
-
-message: String(data.get("message") || "").trim(),
-
-consent: {
-  contact: data.get("contactConsent") === "true",
-},
-
-
-};
-}
-
-async function submitBriefing() {
-if (submitting) {
-return;
-}
-
-submitting = true;
-
-form.hidden = true;
-document.querySelector(".progress-meta").hidden = true;
-document.querySelector(".progress-track").hidden = true;
-loadingPanel.hidden = false;
-
-try {
-const payload = getFormData();
-
-
-const response = await fetch("/api/briefing", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(payload),
-});
-
-const result = await response.json().catch(() => null);
-
-if (!response.ok) {
-  throw new Error(
-    result?.error ||
-    "Não foi possível enviar o briefing."
+  localStorage.setItem(
+    "pereda-briefing-theme",
+    theme
   );
 }
 
-loadingPanel.hidden = true;
-successPanel.hidden = false;
+function initializeTheme() {
+  const savedTheme =
+    localStorage.getItem("pereda-briefing-theme");
 
-successPanel.focus();
+  if (savedTheme === "light" || savedTheme === "dark") {
+    applyTheme(savedTheme);
+    return;
+  }
 
+  const prefersLight =
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: light)").matches;
 
-} catch (error) {
-console.error(error);
-
-submitting = false;
-
-loadingPanel.hidden = true;
-form.hidden = false;
-
-document.querySelector(".progress-meta").hidden = false;
-document.querySelector(".progress-track").hidden = false;
-
-showError(
-  error instanceof Error
-    ? error.message
-    : "Não foi possível enviar o briefing. Tente novamente."
-);
-
-}
-}
-
-nextButton.addEventListener("click", () => {
-if (!validateStep()) {
-return;
-}
-
-if (currentStep < steps.length - 1) {
-currentStep += 1;
-updateStep(1);
-return;
-}
-
-submitBriefing();
-});
-
-backButton.addEventListener("click", () => {
-if (currentStep <= 0) {
-return;
-}
-
-currentStep -= 1;
-updateStep(-1);
-});
-
-form.addEventListener("keydown", (event) => {
-if (
-event.key === "Enter" &&
-event.target.tagName !== "TEXTAREA"
-) {
-event.preventDefault();
-nextButton.click();
-}
-});
-
-form.addEventListener("input", () => {
-clearCurrentError();
-});
-
-form.addEventListener("change", () => {
-clearCurrentError();
-});
-
-form.querySelectorAll(
-'input[name="projectType"]'
-).forEach((input) => {
-input.addEventListener("change", () => {
-const showOther = input.value === "Outro" && input.checked;
-
-
-otherProjectField.hidden = !showOther;
-
-if (!showOther) {
-  form.elements.projectOther.value = "";
-}
-
-
-});
-});
-
-/* THEME */
-
-function getInitialTheme() {
-const saved = localStorage.getItem("pereda-briefing-theme");
-
-if (saved === "light" || saved === "dark") {
-return saved;
-}
-
-return window.matchMedia(
-"(prefers-color-scheme: light)"
-).matches
-? "light"
-: "dark";
-}
-
-function setTheme(theme) {
-document.documentElement.dataset.theme = theme;
-
-localStorage.setItem(
-"pereda-briefing-theme",
-theme
-);
-
-themeToggle.setAttribute(
-"aria-label",
-theme === "dark"
-? "Ativar tema claro"
-: "Ativar tema escuro"
-);
+  applyTheme(prefersLight ? "light" : "dark");
 }
 
 themeToggle.addEventListener("click", () => {
-const current =
-document.documentElement.dataset.theme || "dark";
+  const current =
+    document.documentElement.dataset.theme || "dark";
 
-setTheme(
-current === "dark"
-? "light"
-: "dark"
-);
+  applyTheme(
+    current === "dark"
+      ? "light"
+      : "dark"
+  );
 });
 
-setTheme(getInitialTheme());
+initializeTheme();
 
-updateStep();
+
+/* =========================================================
+   STEP NAVIGATION
+========================================================= */
+
+function updateProgress() {
+  const percent = Math.round(
+    (currentStep / TOTAL_STEPS) * 100
+  );
+
+  currentStepLabel.textContent =
+    String(currentStep).padStart(2, "0");
+
+  progressPercent.textContent =
+    `${percent}%`;
+
+  progressFill.style.width =
+    `${(currentStep / TOTAL_STEPS) * 100}%`;
+}
+
+function showStep(stepNumber) {
+  currentStep = stepNumber;
+
+  steps.forEach((step) => {
+    const isActive =
+      Number(step.dataset.step) === currentStep;
+
+    step.classList.toggle(
+      "active",
+      isActive
+    );
+  });
+
+  updateProgress();
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+
+/* =========================================================
+   VALIDATION
+========================================================= */
+
+function clearErrors(step) {
+  step
+    .querySelectorAll(".field.error")
+    .forEach((field) => {
+      field.classList.remove("error");
+
+      const error =
+        field.querySelector(".field-error");
+
+      if (error) {
+        error.remove();
+      }
+    });
+}
+
+function addError(field, message) {
+  field.classList.add("error");
+
+  const existing =
+    field.querySelector(".field-error");
+
+  if (existing) {
+    existing.remove();
+  }
+
+  const error =
+    document.createElement("span");
+
+  error.className = "field-error";
+  error.textContent = message;
+
+  field.appendChild(error);
+}
+
+function validateStep(stepNumber) {
+  const step =
+    steps.find(
+      (item) =>
+        Number(item.dataset.step) === stepNumber
+    );
+
+  if (!step) {
+    return true;
+  }
+
+  clearErrors(step);
+
+  let valid = true;
+
+  if (stepNumber === 1) {
+    const company =
+      document.getElementById("company");
+
+    if (!company.value.trim()) {
+      addError(
+        company.closest(".field"),
+        "Informe o nome da empresa."
+      );
+
+      valid = false;
+    }
+  }
+
+  if (stepNumber === 2) {
+    const selected =
+      document.querySelector(
+        'input[name="projectType"]:checked'
+      );
+
+    if (!selected) {
+      alert("Selecione o tipo de projeto.");
+      valid = false;
+    }
+
+    if (
+      selected &&
+      selected.value === "Outro" &&
+      !projectOther.value.trim()
+    ) {
+      addError(
+        projectOther.closest(".field"),
+        "Descreva o tipo de projeto."
+      );
+
+      valid = false;
+    }
+  }
+
+  if (stepNumber === 3) {
+    const goals =
+      document.querySelectorAll(
+        'input[name="goals"]:checked'
+      );
+
+    if (!goals.length) {
+      alert("Selecione pelo menos um objetivo.");
+      valid = false;
+    }
+  }
+
+  if (stepNumber === 4) {
+    const presence =
+      document.querySelector(
+        'input[name="presence"]:checked'
+      );
+
+    if (!presence) {
+      alert(
+        "Informe como está a presença digital."
+      );
+
+      valid = false;
+    }
+  }
+
+  if (stepNumber === 6) {
+    const name =
+      document.getElementById("name");
+
+    const email =
+      document.getElementById("email");
+
+    const phone =
+      document.getElementById("phone");
+
+    const consent =
+      document.getElementById("contactConsent");
+
+    if (!name.value.trim()) {
+      addError(
+        name.closest(".field"),
+        "Informe seu nome."
+      );
+
+      valid = false;
+    }
+
+    const emailPattern =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (
+      !email.value.trim() ||
+      !emailPattern.test(email.value.trim())
+    ) {
+      addError(
+        email.closest(".field"),
+        "Informe um e-mail válido."
+      );
+
+      valid = false;
+    }
+
+    if (!phone.value.trim()) {
+      addError(
+        phone.closest(".field"),
+        "Informe seu WhatsApp."
+      );
+
+      valid = false;
+    }
+
+    if (!consent.checked) {
+      alert(
+        "É necessário autorizar o contato para enviar o briefing."
+      );
+
+      valid = false;
+    }
+  }
+
+  return valid;
+}
+
+
+/* =========================================================
+   NEXT / PREVIOUS
+========================================================= */
+
+document
+  .querySelectorAll(".next-step")
+  .forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!validateStep(currentStep)) {
+        return;
+      }
+
+      if (currentStep < TOTAL_STEPS) {
+        showStep(currentStep + 1);
+      }
+    });
+  });
+
+document
+  .querySelectorAll(".prev-step")
+  .forEach((button) => {
+    button.addEventListener("click", () => {
+      if (currentStep > 1) {
+        showStep(currentStep - 1);
+      }
+    });
+  });
+
+
+/* =========================================================
+   OUTRO
+========================================================= */
+
+document
+  .querySelectorAll('input[name="projectType"]')
+  .forEach((input) => {
+    input.addEventListener("change", () => {
+      const isOther =
+        input.value === "Outro" &&
+        input.checked;
+
+      projectOtherWrapper.hidden =
+        !isOther;
+
+      if (!isOther) {
+        projectOther.value = "";
+      }
+    });
+  });
+
+
+/* =========================================================
+   PAYLOAD
+========================================================= */
+
+function getPayload() {
+  const goals =
+    Array.from(
+      document.querySelectorAll(
+        'input[name="goals"]:checked'
+      )
+    ).map((input) => input.value);
+
+  const selectedProject =
+    document.querySelector(
+      'input[name="projectType"]:checked'
+    );
+
+  const presence =
+    document.querySelector(
+      'input[name="presence"]:checked'
+    );
+
+  return {
+    source: "pereda-dev-briefing",
+
+    version: 1,
+
+    submittedAt:
+      new Date().toISOString(),
+
+    business: {
+      company:
+        document
+          .getElementById("company")
+          .value
+          .trim(),
+
+      segment:
+        document
+          .getElementById("segment")
+          .value
+          .trim(),
+
+      location:
+        document
+          .getElementById("location")
+          .value
+          .trim(),
+
+      description:
+        document
+          .getElementById("businessDescription")
+          .value
+          .trim()
+    },
+
+    contact: {
+      name:
+        document
+          .getElementById("name")
+          .value
+          .trim(),
+
+      email:
+        document
+          .getElementById("email")
+          .value
+          .trim(),
+
+      phone:
+        document
+          .getElementById("phone")
+          .value
+          .trim()
+    },
+
+    project: {
+      type:
+        selectedProject
+          ? selectedProject.value
+          : "",
+
+      other:
+        document
+          .getElementById("projectOther")
+          .value
+          .trim(),
+
+      goals
+    },
+
+    digitalPresence: {
+      status:
+        presence
+          ? presence.value
+          : "",
+
+      website:
+        document
+          .getElementById("website")
+          .value
+          .trim(),
+
+      instagram:
+        document
+          .getElementById("instagram")
+          .value
+          .trim(),
+
+      audience:
+        document
+          .getElementById("audience")
+          .value
+          .trim()
+    },
+
+    context: {
+      timeline:
+        document
+          .getElementById("timeline")
+          .value,
+
+      budget:
+        document
+          .getElementById("budget")
+          .value,
+
+      materials:
+        document
+          .getElementById("materials")
+          .value
+          .trim()
+    },
+
+    message:
+      document
+        .getElementById("message")
+        .value
+        .trim(),
+
+    consent: {
+      contact:
+        document
+          .getElementById("contactConsent")
+          .checked
+    }
+  };
+}
+
+
+/* =========================================================
+   SUBMIT
+========================================================= */
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!validateStep(6)) {
+    return;
+  }
+
+  const payload = getPayload();
+
+  /*
+   * Só agora o loading aparece.
+   * Ele permanece escondido durante todo o preenchimento.
+   */
+  form.hidden = true;
+  loadingPanel.hidden = false;
+  successPanel.hidden = true;
+
+  try {
+    const response =
+      await fetch("/api/briefing", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(payload)
+      });
+
+    let data = null;
+
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+        "Não foi possível enviar o briefing."
+      );
+    }
+
+    loadingPanel.hidden = true;
+    successPanel.hidden = false;
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  } catch (error) {
+    console.error(
+      "Erro ao enviar briefing:",
+      error
+    );
+
+    loadingPanel.hidden = true;
+    form.hidden = false;
+
+    alert(
+      error?.message ||
+      "Ocorreu um erro ao enviar o briefing. Tente novamente."
+    );
+  }
+});
+
+
+/* =========================================================
+   ENTER
+========================================================= */
+
+form.addEventListener("keydown", (event) => {
+  if (
+    event.key !== "Enter" ||
+    event.shiftKey
+  ) {
+    return;
+  }
+
+  const target = event.target;
+
+  if (
+    target.tagName === "TEXTAREA" ||
+    target.tagName === "SELECT"
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const activeStep =
+    steps.find(
+      (step) =>
+        Number(step.dataset.step) === currentStep
+    );
+
+  const nextButton =
+    activeStep?.querySelector(".next-step");
+
+  if (nextButton) {
+    nextButton.click();
+  }
+});
+
+
