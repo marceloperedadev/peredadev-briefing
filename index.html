@@ -1,0 +1,763 @@
+<!doctype html>
+
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08070a">
+  <title>Briefing de Projeto | Pereda Dev</title>
+  <meta
+    name="description"
+    content="Conte sobre seu negócio, seus objetivos e o projeto que você quer construir com a Pereda Dev."
+  >
+  <link rel="canonical" href="https://marcelopereda.dev/briefing">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./script.js" defer></script>
+</head>
+
+<body>
+  <div class="page-noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a
+      class="brand"
+      href="https://marcelopereda.dev/"
+      aria-label="Pereda Dev — página inicial"
+    >
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Pereda Dev</span>
+    </a>
+
+
+<div class="header-right">
+  <p class="header-context">Briefing de projeto</p>
+
+  <button
+    class="theme-toggle"
+    id="theme-toggle"
+    type="button"
+    aria-label="Alternar tema"
+    title="Alternar tema"
+  >
+    <span class="theme-icon theme-icon--sun" aria-hidden="true">☼</span>
+    <span class="theme-icon theme-icon--moon" aria-hidden="true">◐</span>
+  </button>
+</div>
+
+
+  </header>
+
+  <main class="briefing-shell">
+
+
+<section class="intro" aria-labelledby="page-title">
+  <div class="intro-topline">
+    <p class="eyebrow">Pereda Dev / Briefing</p>
+    <span class="intro-status">
+      <span class="status-dot"></span>
+      Projeto personalizado
+    </span>
+  </div>
+
+  <h1 id="page-title">
+    Vamos entender
+    <br>
+    <em>o seu projeto.</em>
+  </h1>
+
+  <p class="intro-copy">
+    Antes de pensar em telas, código ou tecnologia, quero entender
+    o seu negócio. Este briefing me ajuda a enxergar o contexto,
+    os objetivos e o que realmente precisa ser construído.
+  </p>
+
+  <div class="intro-meta">
+    <span>01</span>
+    <span>Contexto</span>
+    <span>→</span>
+    <span>Estratégia</span>
+    <span>→</span>
+    <span>Projeto</span>
+  </div>
+
+  <div class="intro-line" aria-hidden="true"></div>
+</section>
+
+<section
+  class="form-area"
+  aria-label="Briefing de projeto"
+>
+  <div class="progress-meta">
+    <span id="step-label">01 — O negócio</span>
+    <span id="progress-count">01 / 06</span>
+  </div>
+
+  <div
+    class="progress-track"
+    aria-hidden="true"
+  >
+    <span id="progress-bar"></span>
+  </div>
+
+  <form
+    id="briefing-form"
+    novalidate
+    autocomplete="on"
+  >
+
+    <!-- STEP 1 -->
+    <fieldset
+      class="step is-active"
+      data-step="1"
+      data-label="O negócio"
+    >
+      <legend>Vamos começar pelo seu negócio.</legend>
+
+      <p class="step-support">
+        Essas informações ajudam a entender quem está por trás
+        do projeto e qual é o contexto da empresa.
+      </p>
+
+      <div class="form-grid form-grid--two">
+        <label class="text-field">
+          <span>Nome da empresa <b aria-hidden="true">*</b></span>
+          <input
+            name="company"
+            type="text"
+            required
+            autocomplete="organization"
+            placeholder="Ex.: Pereda Engenharia"
+          >
+        </label>
+
+        <label class="text-field">
+          <span>Seu nome <b aria-hidden="true">*</b></span>
+          <input
+            name="name"
+            type="text"
+            required
+            autocomplete="name"
+            placeholder="Como posso te chamar?"
+          >
+        </label>
+      </div>
+
+      <div class="form-grid form-grid--two">
+        <label class="text-field">
+          <span>Segmento</span>
+          <input
+            name="segment"
+            type="text"
+            placeholder="Ex.: Engenharia, estética, alimentação..."
+          >
+        </label>
+
+        <label class="text-field">
+          <span>Cidade / região</span>
+          <input
+            name="location"
+            type="text"
+            autocomplete="address-level2"
+            placeholder="Ex.: Taubaté e Vale do Paraíba"
+          >
+        </label>
+      </div>
+
+      <label class="text-field">
+        <span>O que sua empresa oferece?</span>
+        <textarea
+          name="businessDescription"
+          rows="4"
+          placeholder="Conte brevemente o que você faz, vende ou oferece."
+        ></textarea>
+      </label>
+
+      <p
+        class="field-error"
+        data-error-for="business"
+        role="alert"
+      ></p>
+    </fieldset>
+
+    <!-- STEP 2 -->
+    <fieldset
+      class="step"
+      data-step="2"
+      data-label="O projeto"
+      hidden
+    >
+      <legend>O que você quer construir?</legend>
+
+      <p class="step-support">
+        Escolha o tipo de projeto que mais se aproxima do que
+        você está procurando.
+      </p>
+
+      <div class="choice-grid choice-grid--three">
+
+        <label class="choice-card">
+          <input
+            type="radio"
+            name="projectType"
+            value="Novo site"
+          >
+          <span class="choice-index">01</span>
+          <strong>Novo site</strong>
+          <small>
+            Uma presença digital construída do zero.
+          </small>
+        </label>
+
+        <label class="choice-card">
+          <input
+            type="radio"
+            name="projectType"
+            value="Redesign"
+          >
+          <span class="choice-index">02</span>
+          <strong>Redesign</strong>
+          <small>
+            Evoluir uma presença que já existe.
+          </small>
+        </label>
+
+        <label class="choice-card">
+          <input
+            type="radio"
+            name="projectType"
+            value="Landing page"
+          >
+          <span class="choice-index">03</span>
+          <strong>Landing page</strong>
+          <small>
+            Uma página focada em uma ação específica.
+          </small>
+        </label>
+
+        <label class="choice-card">
+          <input
+            type="radio"
+            name="projectType"
+            value="E-commerce"
+          >
+          <span class="choice-index">04</span>
+          <strong>E-commerce</strong>
+          <small>
+            Uma operação digital pensada para vender.
+          </small>
+        </label>
+
+        <label class="choice-card">
+          <input
+            type="radio"
+            name="projectType"
+            value="Sistema / plataforma"
+          >
+          <span class="choice-index">05</span>
+          <strong>Sistema / plataforma</strong>
+          <small>
+            Uma experiência digital com lógica própria.
+          </small>
+        </label>
+
+        <label class="choice-card">
+          <input
+            type="radio"
+            name="projectType"
+            value="Outro"
+          >
+          <span class="choice-index">06</span>
+          <strong>Outro</strong>
+          <small>
+            Algo diferente dos formatos anteriores.
+          </small>
+        </label>
+
+      </div>
+
+      <label class="text-field text-field--conditional" id="other-project-field" hidden>
+        <span>Conte um pouco sobre o projeto</span>
+        <input
+          name="projectOther"
+          type="text"
+          placeholder="Que tipo de solução você imagina?"
+        >
+      </label>
+
+      <p
+        class="field-error"
+        data-error-for="projectType"
+        role="alert"
+      ></p>
+    </fieldset>
+
+    <!-- STEP 3 -->
+    <fieldset
+      class="step"
+      data-step="3"
+      data-label="O objetivo"
+      hidden
+    >
+      <legend>O que precisa mudar?</legend>
+
+      <p class="step-support">
+        Pode escolher mais de uma opção. Não precisa pensar
+        em termos técnicos.
+      </p>
+
+      <div class="choice-grid choice-grid--two">
+
+        <label class="choice-card">
+          <input
+            type="checkbox"
+            name="goals"
+            value="Gerar mais contatos"
+          >
+          <span class="choice-index">01</span>
+          <strong>Gerar mais contatos</strong>
+          <small>
+            Transformar visitas em conversas e oportunidades.
+          </small>
+        </label>
+
+        <label class="choice-card">
+          <input
+            type="checkbox"
+            name="goals"
+            value="Vender mais"
+          >
+          <span class="choice-index">02</span>
+          <strong>Vender mais</strong>
+          <small>
+            Criar uma experiência digital orientada à venda.
+          </small>
+        </label>
+
+        <label class="choice-card">
+          <input
+            type="checkbox"
+            name="goals"
+            value="Comunicar melhor a marca"
+          >
+          <span class="choice-index">03</span>
+          <strong>Comunicar melhor a marca</strong>
+          <small>
+            Mostrar valor, personalidade e posicionamento.
+          </small>
+        </label>
+
+        <label class="choice-card">
+          <input
+            type="checkbox"
+            name="goals"
+            value="Melhorar posicionamento"
+          >
+          <span class="choice-index">04</span>
+          <strong>Melhorar posicionamento</strong>
+          <small>
+            Fazer a presença digital acompanhar o negócio.
+          </small>
+        </label>
+
+        <label class="choice-card">
+          <input
+            type="checkbox"
+            name="goals"
+            value="Captar leads"
+          >
+          <span class="choice-index">05</span>
+          <strong>Captar leads</strong>
+          <small>
+            Estruturar uma entrada de oportunidades.
+          </small>
+        </label>
+
+        <label class="choice-card">
+          <input
+            type="checkbox"
+            name="goals"
+            value="Organizar uma operação"
+          >
+          <span class="choice-index">06</span>
+          <strong>Organizar uma operação</strong>
+          <small>
+            Tirar processos do improviso e colocá-los no digital.
+          </small>
+        </label>
+
+      </div>
+
+      <p
+        class="field-error"
+        data-error-for="goals"
+        role="alert"
+      ></p>
+    </fieldset>
+
+    <!-- STEP 4 -->
+    <fieldset
+      class="step"
+      data-step="4"
+      data-label="Presença digital"
+      hidden
+    >
+      <legend>Como sua empresa aparece hoje?</legend>
+
+      <p class="step-support">
+        Quero entender o ponto de partida antes de pensar
+        no próximo passo.
+      </p>
+
+      <div class="choice-list">
+
+        <label class="choice-row">
+          <input
+            type="radio"
+            name="presence"
+            value="Ainda não tenho presença digital estruturada"
+          >
+          <span>
+            <strong>Ainda não tenho uma presença estruturada</strong>
+            <small>
+              O projeto será um novo ponto de contato com o público.
+            </small>
+          </span>
+          <span class="row-arrow" aria-hidden="true">↗</span>
+        </label>
+
+        <label class="choice-row">
+          <input
+            type="radio"
+            name="presence"
+            value="Tenho presença, mas ela precisa evoluir"
+          >
+          <span>
+            <strong>Tenho presença, mas ela precisa evoluir</strong>
+            <small>
+              Existe uma base, mas ela não representa mais o negócio.
+            </small>
+          </span>
+          <span class="row-arrow" aria-hidden="true">↗</span>
+        </label>
+
+        <label class="choice-row">
+          <input
+            type="radio"
+            name="presence"
+            value="Estou começando agora"
+          >
+          <span>
+            <strong>Estou começando agora</strong>
+            <small>
+              A empresa ou nova operação ainda está sendo estruturada.
+            </small>
+          </span>
+          <span class="row-arrow" aria-hidden="true">↗</span>
+        </label>
+
+      </div>
+
+      <div class="form-grid form-grid--two form-grid--spaced">
+        <label class="text-field">
+          <span>Site atual</span>
+          <input
+            name="website"
+            type="url"
+            inputmode="url"
+            placeholder="https://..."
+          >
+        </label>
+
+        <label class="text-field">
+          <span>Instagram</span>
+          <input
+            name="instagram"
+            type="text"
+            placeholder="@suaempresa"
+          >
+        </label>
+      </div>
+
+      <label class="text-field">
+        <span>Quem é o cliente que você quer alcançar?</span>
+        <textarea
+          name="audience"
+          rows="4"
+          placeholder="Ex.: famílias da região, empresas, clientes de maior ticket..."
+        ></textarea>
+      </label>
+
+      <p
+        class="field-error"
+        data-error-for="presence"
+        role="alert"
+      ></p>
+    </fieldset>
+
+    <!-- STEP 5 -->
+    <fieldset
+      class="step"
+      data-step="5"
+      data-label="O momento"
+      hidden
+    >
+      <legend>Qual é o momento do projeto?</legend>
+
+      <p class="step-support">
+        Prazo e estrutura ajudam a transformar a conversa
+        em um próximo passo mais objetivo.
+      </p>
+
+      <div class="form-grid form-grid--two">
+
+        <label class="text-field">
+          <span>Quando gostaria de colocar no ar?</span>
+          <select name="timeline" required>
+            <option value="">Selecione uma opção</option>
+            <option value="Nas próximas semanas">
+              Nas próximas semanas
+            </option>
+            <option value="Nos próximos 2 a 3 meses">
+              Nos próximos 2 a 3 meses
+            </option>
+            <option value="Nos próximos 3 a 6 meses">
+              Nos próximos 3 a 6 meses
+            </option>
+            <option value="Sem data definida">
+              Sem data definida ainda
+            </option>
+          </select>
+        </label>
+
+        <label class="text-field">
+          <span>Faixa de investimento</span>
+          <select name="budget" required>
+            <option value="">Selecione uma opção</option>
+            <option value="Até R$ 5 mil">
+              Até R$ 5 mil
+            </option>
+            <option value="De R$ 5 mil a R$ 10 mil">
+              De R$ 5 mil a R$ 10 mil
+            </option>
+            <option value="De R$ 10 mil a R$ 20 mil">
+              De R$ 10 mil a R$ 20 mil
+            </option>
+            <option value="Acima de R$ 20 mil">
+              Acima de R$ 20 mil
+            </option>
+            <option value="Ainda estou entendendo">
+              Ainda estou entendendo
+            </option>
+          </select>
+        </label>
+
+      </div>
+
+      <div class="context-box">
+        <span class="context-box__number">+</span>
+        <div>
+          <strong>Você já possui os materiais?</strong>
+          <p>
+            Isso não impede o projeto. Serve apenas para eu entender
+            o que já existe.
+          </p>
+        </div>
+      </div>
+
+      <div class="material-grid">
+
+        <label class="material-option">
+          <input
+            type="checkbox"
+            name="materials"
+            value="Logo / identidade visual"
+          >
+          <span>Logo / identidade visual</span>
+        </label>
+
+        <label class="material-option">
+          <input
+            type="checkbox"
+            name="materials"
+            value="Fotos"
+          >
+          <span>Fotos</span>
+        </label>
+
+        <label class="material-option">
+          <input
+            type="checkbox"
+            name="materials"
+            value="Textos"
+          >
+          <span>Textos</span>
+        </label>
+
+        <label class="material-option">
+          <input
+            type="checkbox"
+            name="materials"
+            value="Produtos / catálogo"
+          >
+          <span>Produtos / catálogo</span>
+        </label>
+
+      </div>
+
+      <p
+        class="field-error"
+        data-error-for="context"
+        role="alert"
+      ></p>
+    </fieldset>
+
+    <!-- STEP 6 -->
+    <fieldset
+      class="step"
+      data-step="6"
+      data-label="Seu contato"
+      hidden
+    >
+      <legend>Vamos continuar essa conversa?</legend>
+
+      <p class="step-support">
+        Deixe seus contatos e qualquer informação que você considere
+        importante. O briefing será usado como ponto de partida
+        para nossa conversa.
+      </p>
+
+      <div class="form-grid form-grid--two">
+
+        <label class="text-field">
+          <span>Seu e-mail <b aria-hidden="true">*</b></span>
+          <input
+            name="email"
+            type="email"
+            required
+            autocomplete="email"
+            placeholder="voce@empresa.com"
+          >
+        </label>
+
+        <label class="text-field">
+          <span>WhatsApp <b aria-hidden="true">*</b></span>
+          <input
+            name="phone"
+            type="tel"
+            required
+            autocomplete="tel"
+            inputmode="tel"
+            placeholder="(12) 99999-9999"
+          >
+        </label>
+
+      </div>
+
+      <label class="text-field">
+        <span>Existe algo importante que eu deveria saber?</span>
+        <textarea
+          name="message"
+          rows="6"
+          placeholder="Pode falar sobre uma ideia, dificuldade, concorrente, referência ou qualquer contexto importante."
+        ></textarea>
+      </label>
+
+      <label class="consent-field">
+        <input
+          type="checkbox"
+          name="contactConsent"
+          value="true"
+          required
+        >
+        <span>
+          Autorizo a Pereda Dev a utilizar estas informações para
+          entrar em contato sobre este projeto.
+        </span>
+      </label>
+
+      <p
+        class="field-error"
+        data-error-for="contact"
+        role="alert"
+      ></p>
+    </fieldset>
+
+    <div class="form-actions">
+      <button
+        class="button button--quiet"
+        id="back-button"
+        type="button"
+        hidden
+      >
+        ← Voltar
+      </button>
+
+      <button
+        class="button button--primary"
+        id="next-button"
+        type="button"
+      >
+        Continuar <span aria-hidden="true">↗</span>
+      </button>
+    </div>
+
+  </form>
+
+  <div
+    class="loading-panel"
+    id="loading-panel"
+    hidden
+    aria-live="polite"
+  >
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <p>Enviando seu briefing...</p>
+  </div>
+
+  <div
+    class="success-panel"
+    id="success-panel"
+    hidden
+    tabindex="-1"
+    aria-live="polite"
+  >
+    <p class="eyebrow">Briefing recebido</p>
+
+    <h2>
+      Obrigado por<br>
+      <em>compartilhar.</em>
+    </h2>
+
+    <p>
+      Seu contexto chegou até mim. Vou analisar as informações
+      e retornar pelo contato informado para conversarmos sobre
+      os próximos passos.
+    </p>
+
+    <div class="success-details">
+      <span>PEREDA DEV</span>
+      <span>Experiências digitais para negócios reais.</span>
+    </div>
+
+    <a
+      class="button button--primary"
+      href="https://marcelopereda.dev/"
+    >
+      Voltar para o site
+      <span aria-hidden="true">↗</span>
+    </a>
+  </div>
+
+</section>
+
+
+  </main>
+
+  <footer class="site-footer">
+    <span>Pereda Dev</span>
+    <a href="mailto:peredadev@gmail.com">
+      peredadev@gmail.com
+    </a>
+    <span>© 2026</span>
+  </footer>
+</body>
+</html>
