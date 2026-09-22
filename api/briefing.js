@@ -15,25 +15,20 @@ export default async function handler(req, res) {
       });
     }
 
-    const company = String(
-      payload.business?.company || ""
-    ).trim();
+    // Limite defensivo de tamanho para evitar abuso do endpoint
+    // (payloads gigantes, spam de texto, e-mails ilegíveis).
+    const cap = (value, max) =>
+      String(value ?? "").trim().slice(0, max);
 
-    const name = String(
-      payload.contact?.name || ""
-    ).trim();
+    const company = cap(payload.business?.company, 200);
 
-    const email = String(
-      payload.contact?.email || ""
-    ).trim();
+    const name = cap(payload.contact?.name, 150);
 
-    const phone = String(
-      payload.contact?.phone || ""
-    ).trim();
+    const email = cap(payload.contact?.email, 200);
 
-    const projectType = String(
-      payload.project?.type || ""
-    ).trim();
+    const phone = cap(payload.contact?.phone, 40);
+
+    const projectType = cap(payload.project?.type, 80);
 
     const consent = Boolean(
       payload.consent?.contact
@@ -83,17 +78,34 @@ export default async function handler(req, res) {
       });
     }
 
-    const goals = Array.isArray(
-      payload.project?.goals
-    )
-      ? payload.project.goals
-      : [];
+    // Honeypot anti-spam: campo invisível para humanos.
+    // Se vier preenchido, é quase certamente um bot.
+    // Respondemos como sucesso (sem enviar e-mail) para não
+    // revelar a existência da armadilha.
+    const honeypot = String(payload.hp || "").trim();
 
-    const materials = Array.isArray(
-      payload.context?.materials
+    if (honeypot) {
+      console.warn("Honeypot preenchido — envio ignorado.");
+
+      return res.status(200).json({
+        success: true,
+        id: null,
+      });
+    }
+
+    const goals = (
+      Array.isArray(payload.project?.goals)
+        ? payload.project.goals
+        : []
     )
-      ? payload.context.materials
-      : [];
+      .slice(0, 10)
+      .map((item) => cap(item, 120));
+
+    // IMPORTANTE: no frontend, "materials" é um textarea de texto
+    // livre (string), não uma lista. O código anterior esperava um
+    // array e por isso o conteúdo desse campo NUNCA aparecia no
+    // e-mail, mesmo quando o cliente escrevia algo relevante ali.
+    const materials = cap(payload.context?.materials, 3000);
 
     const submittedAt = payload.submittedAt
       ? new Date(payload.submittedAt)
@@ -172,7 +184,7 @@ export default async function handler(req, res) {
           <p>
             <strong>Segmento:</strong>
             ${escapeHtml(
-              payload.business?.segment ||
+              cap(payload.business?.segment, 150) ||
                 "Não informado"
             )}
           </p>
@@ -180,7 +192,7 @@ export default async function handler(req, res) {
           <p>
             <strong>Localização:</strong>
             ${escapeHtml(
-              payload.business?.location ||
+              cap(payload.business?.location, 150) ||
                 "Não informado"
             )}
           </p>
@@ -188,7 +200,7 @@ export default async function handler(req, res) {
           <p>
             <strong>Descrição:</strong><br>
             ${escapeHtml(
-              payload.business?.description ||
+              cap(payload.business?.description, 3000) ||
                 "Não informado"
             )}
           </p>
@@ -206,7 +218,7 @@ export default async function handler(req, res) {
                 <p>
                   <strong>Outro tipo:</strong>
                   ${escapeHtml(
-                    payload.project.other
+                    cap(payload.project.other, 200)
                   )}
                 </p>
               `
@@ -224,7 +236,7 @@ export default async function handler(req, res) {
           <p>
             <strong>Status:</strong>
             ${escapeHtml(
-              payload.digitalPresence?.status ||
+              cap(payload.digitalPresence?.status, 60) ||
                 "Não informado"
             )}
           </p>
@@ -232,7 +244,7 @@ export default async function handler(req, res) {
           <p>
             <strong>Site:</strong>
             ${escapeHtml(
-              payload.digitalPresence?.website ||
+              cap(payload.digitalPresence?.website, 300) ||
                 "Não informado"
             )}
           </p>
@@ -240,7 +252,7 @@ export default async function handler(req, res) {
           <p>
             <strong>Instagram:</strong>
             ${escapeHtml(
-              payload.digitalPresence?.instagram ||
+              cap(payload.digitalPresence?.instagram, 150) ||
                 "Não informado"
             )}
           </p>
@@ -248,7 +260,7 @@ export default async function handler(req, res) {
           <p>
             <strong>Público:</strong><br>
             ${escapeHtml(
-              payload.digitalPresence?.audience ||
+              cap(payload.digitalPresence?.audience, 3000) ||
                 "Não informado"
             )}
           </p>
@@ -258,7 +270,7 @@ export default async function handler(req, res) {
           <p>
             <strong>Prazo:</strong>
             ${escapeHtml(
-              payload.context?.timeline ||
+              cap(payload.context?.timeline, 60) ||
                 "Não informado"
             )}
           </p>
@@ -266,22 +278,25 @@ export default async function handler(req, res) {
           <p>
             <strong>Investimento:</strong>
             ${escapeHtml(
-              payload.context?.budget ||
+              cap(payload.context?.budget, 60) ||
                 "Não informado"
             )}
           </p>
 
           <p>
-            <strong>Materiais:</strong>
+            <strong>Materiais:</strong><br>
+            ${
+              materials
+                ? escapeHtml(materials)
+                : "Não informado."
+            }
           </p>
-
-          ${listHtml(materials)}
 
           <h2>Mensagem</h2>
 
           <p style="white-space:pre-line;">
             ${escapeHtml(
-              payload.message ||
+              cap(payload.message, 4000) ||
                 "Nenhuma mensagem adicional."
             )}
           </p>

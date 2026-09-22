@@ -1516,6 +1516,38 @@ html[data-theme="light"] .intro-sticky h1 em {
 }
 
 /* =========================================================
+   HONEYPOT (ANTI-SPAM)
+========================================================= */
+
+.hp-field {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   STEP ALERT (substitui window.alert())
+========================================================= */
+
+.step-alert {
+  margin: -18px 0 28px;
+  padding: 14px 16px;
+
+  border: 1px solid var(--danger);
+  border-radius: 3px;
+
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--text);
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* =========================================================
    ACCESSIBILITY
 ========================================================= */
 

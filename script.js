@@ -116,6 +116,27 @@ function showStep(stepNumber) {
     top: 0,
     behavior: "smooth"
   });
+
+  /*
+   * Ao trocar de etapa, o botão em que o usuário clicou
+   * some da tela (a etapa anterior recebe display:none).
+   * Sem isso, o foco do teclado fica "perdido" no body,
+   * e leitores de tela não anunciam a nova etapa.
+   * Movemos o foco para o título da nova etapa.
+   */
+  const activeStep =
+    steps.find(
+      (step) =>
+        Number(step.dataset.step) === currentStep
+    );
+
+  const heading =
+    activeStep?.querySelector(".step-heading h2");
+
+  if (heading) {
+    heading.setAttribute("tabindex", "-1");
+    heading.focus({ preventScroll: true });
+  }
 }
 
 
@@ -136,6 +157,33 @@ function clearErrors(step) {
         error.remove();
       }
     });
+
+  clearStepAlert(step);
+}
+
+/*
+ * Mensagem inline consistente com o resto do formulário,
+ * usada no lugar de window.alert() para escolhas (radio,
+ * checkbox, consentimento). alert() interrompe o fluxo,
+ * quebra o tema visual e não é uma boa experiência mobile.
+ */
+function clearStepAlert(step) {
+  step
+    .querySelectorAll(".step-alert")
+    .forEach((el) => el.remove());
+}
+
+function showStepAlert(anchorEl, message) {
+  const step = anchorEl.closest(".form-step");
+
+  clearStepAlert(step);
+
+  const alertEl = document.createElement("div");
+  alertEl.className = "step-alert";
+  alertEl.setAttribute("role", "alert");
+  alertEl.textContent = message;
+
+  anchorEl.insertAdjacentElement("afterend", alertEl);
 }
 
 function addError(field, message) {
@@ -193,7 +241,14 @@ function validateStep(stepNumber) {
       );
 
     if (!selected) {
-      alert("Selecione o tipo de projeto.");
+      const choiceList =
+        step.querySelector(".choice-list");
+
+      showStepAlert(
+        choiceList,
+        "Selecione o tipo de projeto."
+      );
+
       valid = false;
     }
 
@@ -218,7 +273,14 @@ function validateStep(stepNumber) {
       );
 
     if (!goals.length) {
-      alert("Selecione pelo menos um objetivo.");
+      const goalGrid =
+        step.querySelector(".goal-grid");
+
+      showStepAlert(
+        goalGrid,
+        "Selecione pelo menos um objetivo."
+      );
+
       valid = false;
     }
   }
@@ -230,7 +292,11 @@ function validateStep(stepNumber) {
       );
 
     if (!presence) {
-      alert(
+      const segmented =
+        step.querySelector(".segmented");
+
+      showStepAlert(
+        segmented,
         "Informe como está a presença digital."
       );
 
@@ -285,7 +351,8 @@ function validateStep(stepNumber) {
     }
 
     if (!consent.checked) {
-      alert(
+      showStepAlert(
+        consent.closest(".consent"),
         "É necessário autorizar o contato para enviar o briefing."
       );
 
@@ -377,6 +444,17 @@ function getPayload() {
 
     submittedAt:
       new Date().toISOString(),
+
+    /*
+     * Campo-armadilha anti-spam. Deve chegar sempre vazio
+     * em envios legítimos. Não deve ser persistido no
+     * Pereda OS — é apenas um sinal de segurança.
+     */
+    hp:
+      document
+        .getElementById("hpField")
+        .value
+        .trim(),
 
     business: {
       company:

@@ -13,6 +13,7 @@
   <meta name="theme-color" content="#08070a" />
 
   <link rel="canonical" href="https://marcelopereda.dev/briefing" />
+  <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 
@@ -52,7 +53,7 @@
             PROJETO DIGITAL
           </div>
 
-          <div class="intro-counter">
+          <div class="intro-counter" aria-live="polite">
             <span id="currentStepLabel">01</span>
             <span class="counter-line"></span>
             <span>06</span>
@@ -93,6 +94,20 @@
       <section class="form-column">
 
         <form id="briefingForm" novalidate>
+
+          <!-- CAMPO ARMADILHA (ANTI-SPAM)
+               Invisível e fora da navegação por teclado/leitor de tela.
+               Humanos nunca preenchem; bots que preenchem tudo, sim. -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="hpField">Não preencha este campo</label>
+            <input
+              type="text"
+              id="hpField"
+              name="hpField"
+              tabindex="-1"
+              autocomplete="off"
+            />
+          </div>
 
           <!-- STEP 01 -->
           <section class="form-step active" data-step="1">
