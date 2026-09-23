@@ -1,14 +1,9 @@
-
-
 const TOTAL_STEPS = 6;
 
 let currentStep = 1;
 
 const form = document.getElementById("briefingForm");
-
-const steps = Array.from(
-  document.querySelectorAll(".form-step")
-);
+const steps = Array.from(document.querySelectorAll(".form-step"));
 
 const currentStepLabel =
   document.getElementById("currentStepLabel");
@@ -34,75 +29,197 @@ const projectOtherWrapper =
 const projectOther =
   document.getElementById("projectOther");
 
+const hpField =
+  document.getElementById("hpField");
 
-/* =========================================================
+const prevButton =
+  document.getElementById("prevButton");
+
+const nextButton =
+  document.getElementById("nextButton");
+
+const submitButton =
+  document.getElementById("submitButton");
+
+const currentYear =
+  document.getElementById("currentYear");
+
+
+if (!form) {
+  throw new Error("Formulário de briefing não encontrado.");
+}
+
+
+/* ---------------------------------------------------------
+   ANO
+   --------------------------------------------------------- */
+
+if (currentYear) {
+  currentYear.textContent = new Date().getFullYear();
+}
+
+
+/* ---------------------------------------------------------
    THEME
-========================================================= */
+   --------------------------------------------------------- */
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
 
-  localStorage.setItem(
-    "pereda-briefing-theme",
-    theme
-  );
+  try {
+    localStorage.setItem(
+      "pereda-briefing-theme",
+      theme
+    );
+  } catch {
+    // LocalStorage pode estar indisponível.
+  }
+
+  if (themeToggle) {
+    const isLight = theme === "light";
+
+    themeToggle.setAttribute(
+      "aria-pressed",
+      String(isLight)
+    );
+
+    themeToggle.setAttribute(
+      "aria-label",
+      isLight
+        ? "Ativar tema escuro"
+        : "Ativar tema claro"
+    );
+  }
 }
 
-function initializeTheme() {
-  const savedTheme =
-    localStorage.getItem("pereda-briefing-theme");
 
-  if (savedTheme === "light" || savedTheme === "dark") {
+function initializeTheme() {
+  let savedTheme = null;
+
+  try {
+    savedTheme = localStorage.getItem(
+      "pereda-briefing-theme"
+    );
+  } catch {
+    savedTheme = null;
+  }
+
+  if (
+    savedTheme === "dark" ||
+    savedTheme === "light"
+  ) {
     applyTheme(savedTheme);
     return;
   }
 
   const prefersLight =
     window.matchMedia &&
-    window.matchMedia("(prefers-color-scheme: light)").matches;
-
-  applyTheme(prefersLight ? "light" : "dark");
-}
-
-themeToggle.addEventListener("click", () => {
-  const current =
-    document.documentElement.dataset.theme || "dark";
+    window.matchMedia(
+      "(prefers-color-scheme: light)"
+    ).matches;
 
   applyTheme(
-    current === "dark"
+    prefersLight
       ? "light"
       : "dark"
   );
-});
+}
+
+
+if (themeToggle) {
+  themeToggle.addEventListener(
+    "click",
+    () => {
+      const currentTheme =
+        document.documentElement.dataset.theme === "light"
+          ? "light"
+          : "dark";
+
+      applyTheme(
+        currentTheme === "light"
+          ? "dark"
+          : "light"
+      );
+    }
+  );
+}
 
 initializeTheme();
 
 
-/* =========================================================
-   STEP NAVIGATION
-========================================================= */
+/* ---------------------------------------------------------
+   PROGRESS
+   --------------------------------------------------------- */
 
 function updateProgress() {
-  const percent = Math.round(
-    (currentStep / TOTAL_STEPS) * 100
-  );
+  const percentage =
+    Math.round(
+      (currentStep / TOTAL_STEPS) * 100
+    );
 
-  currentStepLabel.textContent =
-    String(currentStep).padStart(2, "0");
+  if (currentStepLabel) {
+    currentStepLabel.textContent =
+      `Etapa ${currentStep} de ${TOTAL_STEPS}`;
+  }
 
-  progressPercent.textContent =
-    `${percent}%`;
+  if (progressPercent) {
+    progressPercent.textContent =
+      `${percentage}%`;
+  }
 
-  progressFill.style.width =
-    `${(currentStep / TOTAL_STEPS) * 100}%`;
+  if (progressFill) {
+    progressFill.style.width =
+      `${percentage}%`;
+  }
+
+  const progressTrack =
+    document.querySelector(
+      ".progress-track"
+    );
+
+  if (progressTrack) {
+    progressTrack.setAttribute(
+      "aria-valuenow",
+      String(percentage)
+    );
+  }
 }
 
+
+/* ---------------------------------------------------------
+   STEP VISIBILITY
+   --------------------------------------------------------- */
+
+function updateNavigation() {
+  if (prevButton) {
+    prevButton.hidden =
+      currentStep === 1;
+  }
+
+  if (nextButton) {
+    nextButton.hidden =
+      currentStep === TOTAL_STEPS;
+  }
+
+  if (submitButton) {
+    submitButton.hidden =
+      currentStep !== TOTAL_STEPS;
+  }
+}
+
+
 function showStep(stepNumber) {
-  currentStep = stepNumber;
+  currentStep = Math.min(
+    Math.max(stepNumber, 1),
+    TOTAL_STEPS
+  );
 
   steps.forEach((step) => {
+    const stepValue =
+      Number(step.dataset.step);
+
     const isActive =
-      Number(step.dataset.step) === currentStep;
+      stepValue === currentStep;
 
     step.classList.toggle(
       "active",
@@ -111,61 +228,127 @@ function showStep(stepNumber) {
   });
 
   updateProgress();
+  updateNavigation();
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
+  const activeStep =
+    steps.find(
+      (step) =>
+        Number(step.dataset.step) ===
+        currentStep
+    );
+
+  if (activeStep) {
+    const heading =
+      activeStep.querySelector(
+        ".step-heading h2"
+      );
+
+    /*
+      IMPORTANTE:
+      O foco é mantido no novo título sem
+      deslocar a página.
+    */
+    if (heading) {
+      try {
+        heading.focus({
+          preventScroll: true
+        });
+      } catch {
+        heading.focus();
+      }
+    }
+  }
 }
 
 
-/* =========================================================
-   VALIDATION
-========================================================= */
+/* ---------------------------------------------------------
+   VALIDATION HELPERS
+   --------------------------------------------------------- */
 
 function clearErrors(step) {
   step
     .querySelectorAll(".field.error")
     .forEach((field) => {
       field.classList.remove("error");
+    });
 
-      const error =
-        field.querySelector(".field-error");
+  step
+    .querySelectorAll(".field-error")
+    .forEach((error) => {
+      error.textContent = "";
+    });
 
-      if (error) {
-        error.remove();
-      }
+  clearStepAlert(step);
+}
+
+
+function clearStepAlert(step) {
+  step
+    .querySelectorAll(".step-alert")
+    .forEach((alert) => {
+      alert.remove();
     });
 }
 
-function addError(field, message) {
-  field.classList.add("error");
 
-  const existing =
-    field.querySelector(".field-error");
+function showStepAlert(anchorEl, message) {
+  const step =
+    anchorEl.closest(".form-step");
 
-  if (existing) {
-    existing.remove();
+  if (!step) {
+    return;
   }
 
-  const error =
-    document.createElement("span");
+  clearStepAlert(step);
 
-  error.className = "field-error";
-  error.textContent = message;
+  const alert =
+    document.createElement("div");
 
-  field.appendChild(error);
+  alert.className = "step-alert";
+  alert.setAttribute(
+    "role",
+    "alert"
+  );
+
+  alert.textContent = message;
+
+  anchorEl.insertAdjacentElement(
+    "afterend",
+    alert
+  );
 }
+
+
+function addError(field, message) {
+  if (!field) {
+    return;
+  }
+
+  field.classList.add("error");
+
+  const error =
+    field.querySelector(".field-error");
+
+  if (error) {
+    error.textContent = message;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   VALIDATION
+   --------------------------------------------------------- */
 
 function validateStep(stepNumber) {
   const step =
     steps.find(
       (item) =>
-        Number(item.dataset.step) === stepNumber
+        Number(item.dataset.step) ===
+        stepNumber
     );
 
   if (!step) {
-    return true;
+    return false;
   }
 
   clearErrors(step);
@@ -176,67 +359,119 @@ function validateStep(stepNumber) {
     const company =
       document.getElementById("company");
 
+    const segment =
+      document.getElementById("segment");
+
+    const location =
+      document.getElementById("location");
+
+    const description =
+      document.getElementById(
+        "businessDescription"
+      );
+
     if (!company.value.trim()) {
       addError(
-        company.closest(".field"),
+        company.parentElement,
         "Informe o nome da empresa."
       );
 
       valid = false;
     }
+
+    if (!segment.value.trim()) {
+      addError(
+        segment.parentElement,
+        "Informe o segmento."
+      );
+
+      valid = false;
+    }
+
+    if (!location.value.trim()) {
+      addError(
+        location.parentElement,
+        "Informe a cidade ou região."
+      );
+
+      valid = false;
+    }
+
+    if (!description.value.trim()) {
+      addError(
+        description.parentElement,
+        "Conte brevemente sobre a empresa."
+      );
+
+      valid = false;
+    }
   }
 
+
   if (stepNumber === 2) {
-    const selected =
-      document.querySelector(
+    const selectedProject =
+      step.querySelector(
         'input[name="projectType"]:checked'
       );
 
-    if (!selected) {
-      alert("Selecione o tipo de projeto.");
+    if (!selectedProject) {
+      showStepAlert(
+        step.querySelector(".choice-list"),
+        "Selecione uma opção para continuar."
+      );
+
       valid = false;
     }
 
     if (
-      selected &&
-      selected.value === "Outro" &&
-      !projectOther.value.trim()
+      selectedProject &&
+      selectedProject.value === "Outro"
     ) {
-      addError(
-        projectOther.closest(".field"),
-        "Descreva o tipo de projeto."
-      );
+      if (!projectOther.value.trim()) {
+        addError(
+          projectOther.parentElement,
+          "Descreva brevemente o projeto."
+        );
 
-      valid = false;
+        valid = false;
+      }
     }
   }
 
+
   if (stepNumber === 3) {
     const goals =
-      document.querySelectorAll(
+      step.querySelectorAll(
         'input[name="goals"]:checked'
       );
 
     if (!goals.length) {
-      alert("Selecione pelo menos um objetivo.");
+      showStepAlert(
+        step.querySelector(".goal-grid"),
+        "Selecione pelo menos um objetivo."
+      );
+
       valid = false;
     }
   }
 
+
   if (stepNumber === 4) {
     const presence =
-      document.querySelector(
+      step.querySelector(
         'input[name="presence"]:checked'
       );
 
     if (!presence) {
-      alert(
-        "Informe como está a presença digital."
+      showStepAlert(
+        step.querySelector(".segmented"),
+        "Selecione uma opção para continuar."
       );
 
       valid = false;
     }
   }
+
 
   if (stepNumber === 6) {
     const name =
@@ -249,11 +484,13 @@ function validateStep(stepNumber) {
       document.getElementById("phone");
 
     const consent =
-      document.getElementById("contactConsent");
+      document.getElementById(
+        "contactConsent"
+      );
 
     if (!name.value.trim()) {
       addError(
-        name.closest(".field"),
+        name.parentElement,
         "Informe seu nome."
       );
 
@@ -263,12 +500,20 @@ function validateStep(stepNumber) {
     const emailPattern =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (
-      !email.value.trim() ||
-      !emailPattern.test(email.value.trim())
+    if (!email.value.trim()) {
+      addError(
+        email.parentElement,
+        "Informe seu e-mail."
+      );
+
+      valid = false;
+    } else if (
+      !emailPattern.test(
+        email.value.trim()
+      )
     ) {
       addError(
-        email.closest(".field"),
+        email.parentElement,
         "Informe um e-mail válido."
       );
 
@@ -277,16 +522,19 @@ function validateStep(stepNumber) {
 
     if (!phone.value.trim()) {
       addError(
-        phone.closest(".field"),
-        "Informe seu WhatsApp."
+        phone.parentElement,
+        "Informe seu WhatsApp ou telefone."
       );
 
       valid = false;
     }
 
     if (!consent.checked) {
-      alert(
-        "É necessário autorizar o contato para enviar o briefing."
+      showStepAlert(
+        document.querySelector(
+          ".consent-field"
+        ),
+        "Autorize o contato para enviar o briefing."
       );
 
       valid = false;
@@ -297,69 +545,145 @@ function validateStep(stepNumber) {
 }
 
 
-/* =========================================================
-   NEXT / PREVIOUS
-========================================================= */
+/* ---------------------------------------------------------
+   PROJECT OTHER
+   --------------------------------------------------------- */
+
+function updateProjectOther() {
+  const selected =
+    document.querySelector(
+      'input[name="projectType"]:checked'
+    );
+
+  const isOther =
+    selected &&
+    selected.value === "Outro";
+
+  if (projectOtherWrapper) {
+    projectOtherWrapper.hidden =
+      !isOther;
+  }
+
+  if (!isOther && projectOther) {
+    projectOther.value = "";
+
+    const error =
+      projectOther.parentElement
+        .querySelector(".field-error");
+
+    projectOther.parentElement
+      .classList.remove("error");
+
+    if (error) {
+      error.textContent = "";
+    }
+  }
+}
+
+
+document
+  .querySelectorAll(
+    'input[name="projectType"]'
+  )
+  .forEach((input) => {
+    input.addEventListener(
+      "change",
+      updateProjectOther
+    );
+  });
+
+
+/* ---------------------------------------------------------
+   NAVIGATION
+   --------------------------------------------------------- */
 
 document
   .querySelectorAll(".next-step")
   .forEach((button) => {
-    button.addEventListener("click", () => {
-      if (!validateStep(currentStep)) {
-        return;
-      }
+    button.addEventListener(
+      "click",
+      () => {
+        if (
+          !validateStep(currentStep)
+        ) {
+          return;
+        }
 
-      if (currentStep < TOTAL_STEPS) {
-        showStep(currentStep + 1);
+        showStep(
+          currentStep + 1
+        );
       }
-    });
+    );
   });
+
 
 document
   .querySelectorAll(".prev-step")
   .forEach((button) => {
-    button.addEventListener("click", () => {
-      if (currentStep > 1) {
-        showStep(currentStep - 1);
+    button.addEventListener(
+      "click",
+      () => {
+        showStep(
+          currentStep - 1
+        );
       }
-    });
+    );
   });
 
 
-/* =========================================================
-   OUTRO
-========================================================= */
+/* ---------------------------------------------------------
+   ENTER
+   --------------------------------------------------------- */
 
-document
-  .querySelectorAll('input[name="projectType"]')
-  .forEach((input) => {
-    input.addEventListener("change", () => {
-      const isOther =
-        input.value === "Outro" &&
-        input.checked;
+form.addEventListener(
+  "keydown",
+  (event) => {
+    if (
+      event.key !== "Enter" ||
+      event.shiftKey
+    ) {
+      return;
+    }
 
-      projectOtherWrapper.hidden =
-        !isOther;
+    const target =
+      event.target;
 
-      if (!isOther) {
-        projectOther.value = "";
-      }
-    });
-  });
+    if (
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement
+    ) {
+      return;
+    }
+
+    const activeStep =
+      steps.find(
+        (step) =>
+          Number(step.dataset.step) ===
+          currentStep
+      );
+
+    if (!activeStep) {
+      return;
+    }
+
+    const nextButtonInStep =
+      activeStep.querySelector(
+        ".next-step"
+      );
+
+    if (nextButtonInStep) {
+      event.preventDefault();
+      nextButtonInStep.click();
+    }
+  }
+);
 
 
-/* =========================================================
+/* ---------------------------------------------------------
    PAYLOAD
-========================================================= */
+   --------------------------------------------------------- */
 
 function getPayload() {
-  const goals =
-    Array.from(
-      document.querySelectorAll(
-        'input[name="goals"]:checked'
-      )
-    ).map((input) => input.value);
-
   const selectedProject =
     document.querySelector(
       'input[name="projectType"]:checked'
@@ -370,13 +694,24 @@ function getPayload() {
       'input[name="presence"]:checked'
     );
 
+  const goals =
+    Array.from(
+      document.querySelectorAll(
+        'input[name="goals"]:checked'
+      )
+    ).map(
+      (input) => input.value
+    );
+
   return {
     source: "pereda-dev-briefing",
-
     version: 1,
+    submittedAt: new Date().toISOString(),
 
-    submittedAt:
-      new Date().toISOString(),
+    hp:
+      hpField
+        ? hpField.value.trim()
+        : "",
 
     business: {
       company:
@@ -399,7 +734,9 @@ function getPayload() {
 
       description:
         document
-          .getElementById("businessDescription")
+          .getElementById(
+            "businessDescription"
+          )
           .value
           .trim()
     },
@@ -431,10 +768,9 @@ function getPayload() {
           : "",
 
       other:
-        document
-          .getElementById("projectOther")
-          .value
-          .trim(),
+        projectOther
+          ? projectOther.value.trim()
+          : "",
 
       goals
     },
@@ -468,12 +804,14 @@ function getPayload() {
       timeline:
         document
           .getElementById("timeline")
-          .value,
+          .value
+          .trim(),
 
       budget:
         document
           .getElementById("budget")
-          .value,
+          .value
+          .trim(),
 
       materials:
         document
@@ -491,121 +829,136 @@ function getPayload() {
     consent: {
       contact:
         document
-          .getElementById("contactConsent")
+          .getElementById(
+            "contactConsent"
+          )
           .checked
     }
   };
 }
 
 
-/* =========================================================
+/* ---------------------------------------------------------
    SUBMIT
-========================================================= */
+   --------------------------------------------------------- */
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+form.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
 
-  if (!validateStep(6)) {
-    return;
-  }
+    if (
+      !validateStep(TOTAL_STEPS)
+    ) {
+      return;
+    }
 
-  const payload = getPayload();
+    const payload =
+      getPayload();
 
-  /*
-   * Só agora o loading aparece.
-   * Ele permanece escondido durante todo o preenchimento.
-   */
-  form.hidden = true;
-  loadingPanel.hidden = false;
-  successPanel.hidden = true;
+    form.hidden = true;
 
-  try {
-    const response =
-      await fetch("/api/briefing", {
-        method: "POST",
+    if (loadingPanel) {
+      loadingPanel.hidden = false;
+    }
 
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify(payload)
-      });
-
-    let data = null;
+    if (successPanel) {
+      successPanel.hidden = true;
+    }
 
     try {
-      data = await response.json();
-    } catch {
-      data = null;
+      const response =
+        await fetch(
+          "/api/briefing",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify(payload)
+          }
+        );
+
+      let data = null;
+
+      try {
+        data =
+          await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (
+        !response.ok ||
+        !data ||
+        !data.success
+      ) {
+        throw new Error(
+          data &&
+          data.error
+            ? data.error
+            : "Não foi possível enviar o briefing."
+        );
+      }
+
+      if (loadingPanel) {
+        loadingPanel.hidden = true;
+      }
+
+      if (successPanel) {
+        successPanel.hidden = false;
+
+        try {
+          successPanel.focus({
+            preventScroll: true
+          });
+        } catch {
+          successPanel.focus();
+        }
+      }
+
+    } catch (error) {
+      if (loadingPanel) {
+        loadingPanel.hidden = true;
+      }
+
+      form.hidden = false;
+
+      const activeStep =
+        steps.find(
+          (step) =>
+            Number(step.dataset.step) ===
+            currentStep
+        );
+
+      if (activeStep) {
+        const heading =
+          activeStep.querySelector(
+            ".step-heading"
+          );
+
+        if (heading) {
+          showStepAlert(
+            heading,
+            error instanceof Error
+              ? error.message
+              : "Não foi possível enviar o briefing."
+          );
+        }
+      }
     }
-
-    if (!response.ok) {
-      throw new Error(
-        data?.error ||
-        "Não foi possível enviar o briefing."
-      );
-    }
-
-    loadingPanel.hidden = true;
-    successPanel.hidden = false;
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-
-  } catch (error) {
-    console.error(
-      "Erro ao enviar briefing:",
-      error
-    );
-
-    loadingPanel.hidden = true;
-    form.hidden = false;
-
-    alert(
-      error?.message ||
-      "Ocorreu um erro ao enviar o briefing. Tente novamente."
-    );
   }
-});
+);
 
 
-/* =========================================================
-   ENTER
-========================================================= */
+/* ---------------------------------------------------------
+   INITIAL STATE
+   --------------------------------------------------------- */
 
-form.addEventListener("keydown", (event) => {
-  if (
-    event.key !== "Enter" ||
-    event.shiftKey
-  ) {
-    return;
-  }
-
-  const target = event.target;
-
-  if (
-    target.tagName === "TEXTAREA" ||
-    target.tagName === "SELECT"
-  ) {
-    return;
-  }
-
-  event.preventDefault();
-
-  const activeStep =
-    steps.find(
-      (step) =>
-        Number(step.dataset.step) === currentStep
-    );
-
-  const nextButton =
-    activeStep?.querySelector(".next-step");
-
-  if (nextButton) {
-    nextButton.click();
-  }
-});
-
-
+updateProjectOther();
+updateProgress();
+showStep(currentStep);

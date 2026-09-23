@@ -15,29 +15,64 @@ export default async function handler(req, res) {
       });
     }
 
-    const company = String(
-      payload.business?.company || ""
-    ).trim();
+    // Limite defensivo de tamanho para evitar abuso do endpoint.
+    const cap = (value, max) =>
+      String(value ?? "")
+        .trim()
+        .slice(0, max);
 
-    const name = String(
-      payload.contact?.name || ""
-    ).trim();
+    // ------------------------------------------------------------
+    // HONEYPOT ANTI-SPAM
+    // ------------------------------------------------------------
+    // O campo hp deve existir no frontend, mas permanecer invisível
+    // para usuários reais.
+    //
+    // Se vier preenchido, consideramos o envio suspeito.
+    // Respondemos como sucesso sem enviar o e-mail para não revelar
+    // a existência da armadilha ao bot.
+    const honeypot = cap(payload.hp, 200);
 
-    const email = String(
-      payload.contact?.email || ""
-    ).trim();
+    if (honeypot) {
+      console.warn("Honeypot preenchido — envio ignorado.");
 
-    const phone = String(
-      payload.contact?.phone || ""
-    ).trim();
+      return res.status(200).json({
+        success: true,
+        id: null,
+      });
+    }
 
-    const projectType = String(
-      payload.project?.type || ""
-    ).trim();
+    // ------------------------------------------------------------
+    // DADOS PRINCIPAIS
+    // ------------------------------------------------------------
+
+    const company = cap(payload.business?.company, 200);
+    const name = cap(payload.contact?.name, 150);
+    const email = cap(payload.contact?.email, 200);
+    const phone = cap(payload.contact?.phone, 40);
+
+    const projectType = cap(payload.project?.type, 80);
+
+    const goals = (
+      Array.isArray(payload.project?.goals)
+        ? payload.project.goals
+        : []
+    )
+      .slice(0, 10)
+      .map((item) => cap(item, 120))
+      .filter(Boolean);
+
+    const presenceStatus = cap(
+      payload.digitalPresence?.status,
+      60
+    );
 
     const consent = Boolean(
       payload.consent?.contact
     );
+
+    // ------------------------------------------------------------
+    // VALIDAÇÕES
+    // ------------------------------------------------------------
 
     if (!company || !name || !email || !phone) {
       return res.status(400).json({
@@ -51,12 +86,25 @@ export default async function handler(req, res) {
       });
     }
 
+    if (!goals.length) {
+      return res.status(400).json({
+        error: "Selecione pelo menos um objetivo.",
+      });
+    }
+
+    if (!presenceStatus) {
+      return res.status(400).json({
+        error: "Informe como está a presença digital.",
+      });
+    }
+
     if (!consent) {
       return res.status(400).json({
         error: "Consentimento não informado.",
       });
     }
 
+    // Validação básica de e-mail.
     const emailPattern =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -66,16 +114,15 @@ export default async function handler(req, res) {
       });
     }
 
-    const apiKey =
-      process.env.RESEND_API_KEY;
+    // ------------------------------------------------------------
+    // CONFIGURAÇÃO DO RESEND
+    // ------------------------------------------------------------
 
-    const fromEmail =
-      process.env.RESEND_FROM_EMAIL;
+    const apiKey = process.env.RESEND_API_KEY;
+    const fromEmail = process.env.RESEND_FROM_EMAIL;
 
     if (!apiKey || !fromEmail) {
-      console.error(
-        "Resend não configurado."
-      );
+      console.error("Resend não configurado.");
 
       return res.status(500).json({
         error:
@@ -83,36 +130,91 @@ export default async function handler(req, res) {
       });
     }
 
-    const goals = Array.isArray(
-      payload.project?.goals
-    )
-      ? payload.project.goals
-      : [];
+    // ------------------------------------------------------------
+    // DADOS COMPLEMENTARES
+    // ------------------------------------------------------------
 
-    const materials = Array.isArray(
-      payload.context?.materials
-    )
-      ? payload.context.materials
-      : [];
+    const segment = cap(
+      payload.business?.segment,
+      150
+    );
+
+    const location = cap(
+      payload.business?.location,
+      150
+    );
+
+    const description = cap(
+      payload.business?.description,
+      3000
+    );
+
+    const otherProjectType = cap(
+      payload.project?.other,
+      200
+    );
+
+    const website = cap(
+      payload.digitalPresence?.website,
+      300
+    );
+
+    const instagram = cap(
+      payload.digitalPresence?.instagram,
+      150
+    );
+
+    const audience = cap(
+      payload.digitalPresence?.audience,
+      3000
+    );
+
+    const timeline = cap(
+      payload.context?.timeline,
+      60
+    );
+
+    const budget = cap(
+      payload.context?.budget,
+      60
+    );
+
+    // IMPORTANTÍSSIMO:
+    // materials é uma string/textarea, não um array.
+    const materials = cap(
+      payload.context?.materials,
+      3000
+    );
+
+    const message = cap(
+      payload.message,
+      4000
+    );
+
+    // ------------------------------------------------------------
+    // DATA DO ENVIO
+    // ------------------------------------------------------------
 
     const submittedAt = payload.submittedAt
       ? new Date(payload.submittedAt)
       : new Date();
 
-    const validSubmittedAt =
-      Number.isNaN(submittedAt.getTime())
-        ? new Date()
-        : submittedAt;
+    const validSubmittedAt = Number.isNaN(
+      submittedAt.getTime()
+    )
+      ? new Date()
+      : submittedAt;
 
     const formattedDate =
-      new Intl.DateTimeFormat(
-        "pt-BR",
-        {
-          dateStyle: "full",
-          timeStyle: "short",
-          timeZone: "America/Sao_Paulo",
-        }
-      ).format(validSubmittedAt);
+      new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "full",
+        timeStyle: "short",
+        timeZone: "America/Sao_Paulo",
+      }).format(validSubmittedAt);
+
+    // ------------------------------------------------------------
+    // SEGURANÇA — ESCAPE HTML
+    // ------------------------------------------------------------
 
     const escapeHtml = (value) =>
       String(value ?? "")
@@ -132,6 +234,10 @@ export default async function handler(req, res) {
             .join("")}</ul>`
         : "<p>Não informado.</p>";
 
+    // ------------------------------------------------------------
+    // E-MAIL
+    // ------------------------------------------------------------
+
     const html = `
       <div style="font-family:Arial,sans-serif;max-width:760px;margin:0 auto;color:#111;">
         <div style="padding:24px 0;border-bottom:2px solid #b8ff00;">
@@ -145,6 +251,7 @@ export default async function handler(req, res) {
         </div>
 
         <div style="padding:28px 0;">
+
           <h2>Contato</h2>
 
           <p>
@@ -171,26 +278,17 @@ export default async function handler(req, res) {
 
           <p>
             <strong>Segmento:</strong>
-            ${escapeHtml(
-              payload.business?.segment ||
-                "Não informado"
-            )}
+            ${escapeHtml(segment || "Não informado")}
           </p>
 
           <p>
             <strong>Localização:</strong>
-            ${escapeHtml(
-              payload.business?.location ||
-                "Não informado"
-            )}
+            ${escapeHtml(location || "Não informado")}
           </p>
 
           <p>
             <strong>Descrição:</strong><br>
-            ${escapeHtml(
-              payload.business?.description ||
-                "Não informado"
-            )}
+            ${escapeHtml(description || "Não informado")}
           </p>
 
           <h2>Projeto</h2>
@@ -201,13 +299,11 @@ export default async function handler(req, res) {
           </p>
 
           ${
-            payload.project?.other
+            otherProjectType
               ? `
                 <p>
                   <strong>Outro tipo:</strong>
-                  ${escapeHtml(
-                    payload.project.other
-                  )}
+                  ${escapeHtml(otherProjectType)}
                 </p>
               `
               : ""
@@ -224,32 +320,26 @@ export default async function handler(req, res) {
           <p>
             <strong>Status:</strong>
             ${escapeHtml(
-              payload.digitalPresence?.status ||
-                "Não informado"
+              presenceStatus || "Não informado"
             )}
           </p>
 
           <p>
             <strong>Site:</strong>
-            ${escapeHtml(
-              payload.digitalPresence?.website ||
-                "Não informado"
-            )}
+            ${escapeHtml(website || "Não informado")}
           </p>
 
           <p>
             <strong>Instagram:</strong>
             ${escapeHtml(
-              payload.digitalPresence?.instagram ||
-                "Não informado"
+              instagram || "Não informado"
             )}
           </p>
 
           <p>
             <strong>Público:</strong><br>
             ${escapeHtml(
-              payload.digitalPresence?.audience ||
-                "Não informado"
+              audience || "Não informado"
             )}
           </p>
 
@@ -258,44 +348,47 @@ export default async function handler(req, res) {
           <p>
             <strong>Prazo:</strong>
             ${escapeHtml(
-              payload.context?.timeline ||
-                "Não informado"
+              timeline || "Não informado"
             )}
           </p>
 
           <p>
             <strong>Investimento:</strong>
             ${escapeHtml(
-              payload.context?.budget ||
-                "Não informado"
+              budget || "Não informado"
             )}
           </p>
 
           <p>
-            <strong>Materiais:</strong>
+            <strong>Materiais:</strong><br>
+            ${
+              materials
+                ? escapeHtml(materials)
+                : "Não informado."
+            }
           </p>
-
-          ${listHtml(materials)}
 
           <h2>Mensagem</h2>
 
           <p style="white-space:pre-line;">
             ${escapeHtml(
-              payload.message ||
-                "Nenhuma mensagem adicional."
+              message || "Nenhuma mensagem adicional."
             )}
           </p>
 
           <div style="margin-top:32px;padding:16px;background:#f3f3f3;">
             <p style="margin:0;font-size:12px;color:#666;">
-              Recebido em ${escapeHtml(
-                formattedDate
-              )}
+              Recebido em ${escapeHtml(formattedDate)}
             </p>
           </div>
+
         </div>
       </div>
     `;
+
+    // ------------------------------------------------------------
+    // ENVIO RESEND
+    // ------------------------------------------------------------
 
     const resendResponse = await fetch(
       "https://api.resend.com/emails",
@@ -332,24 +425,26 @@ export default async function handler(req, res) {
       });
     }
 
-    /*
-     * FUTURO PEREDA OS
-     *
-     * Aqui entra a persistência no PostgreSQL/Neon.
-     *
-     * Exemplo:
-     *
-     * await createLead({
-     *   company,
-     *   name,
-     *   email,
-     *   phone,
-     *   projectType,
-     *   ...
-     * });
-     *
-     * O payload já está estruturado para isso.
-     */
+    // ------------------------------------------------------------
+    // FUTURO PEREDA OS
+    // ------------------------------------------------------------
+    //
+    // Aqui poderá entrar posteriormente a persistência
+    // no PostgreSQL/Neon.
+    //
+    // Exemplo:
+    //
+    // await createLead({
+    //   company,
+    //   name,
+    //   email,
+    //   phone,
+    //   projectType,
+    //   ...
+    // });
+    //
+    // O payload já está estruturado para essa evolução.
+    // ------------------------------------------------------------
 
     return res.status(200).json({
       success: true,
