@@ -5,23 +5,14 @@ let currentStep = 1;
 const form = document.getElementById("briefingForm");
 const steps = Array.from(document.querySelectorAll(".form-step"));
 
-const currentStepLabel =
-  document.getElementById("currentStepLabel");
+const currentStepLabel = document.getElementById("currentStepLabel");
+const progressPercent = document.getElementById("progressPercent");
+const progressFill = document.getElementById("progressFill");
 
-const progressPercent =
-  document.getElementById("progressPercent");
+const themeToggle = document.getElementById("themeToggle");
 
-const progressFill =
-  document.getElementById("progressFill");
-
-const themeToggle =
-  document.getElementById("themeToggle");
-
-const loadingPanel =
-  document.getElementById("loadingPanel");
-
-const successPanel =
-  document.getElementById("successPanel");
+const loadingPanel = document.getElementById("loadingPanel");
+const successPanel = document.getElementById("successPanel");
 
 const projectOtherWrapper =
   document.getElementById("projectOtherWrapper");
@@ -32,32 +23,9 @@ const projectOther =
 const hpField =
   document.getElementById("hpField");
 
-const prevButton =
-  document.getElementById("prevButton");
-
-const nextButton =
-  document.getElementById("nextButton");
-
-const submitButton =
-  document.getElementById("submitButton");
-
-const currentYear =
-  document.getElementById("currentYear");
-
-
 if (!form) {
-  throw new Error("Formulário de briefing não encontrado.");
+  console.error("Formulário de briefing não encontrado.");
 }
-
-
-/* ---------------------------------------------------------
-   ANO
-   --------------------------------------------------------- */
-
-if (currentYear) {
-  currentYear.textContent = new Date().getFullYear();
-}
-
 
 /* ---------------------------------------------------------
    THEME
@@ -67,99 +35,58 @@ function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
 
   try {
-    localStorage.setItem(
-      "pereda-briefing-theme",
-      theme
-    );
+    localStorage.setItem("pereda-briefing-theme", theme);
   } catch {
-    // LocalStorage pode estar indisponível.
-  }
-
-  if (themeToggle) {
-    const isLight = theme === "light";
-
-    themeToggle.setAttribute(
-      "aria-pressed",
-      String(isLight)
-    );
-
-    themeToggle.setAttribute(
-      "aria-label",
-      isLight
-        ? "Ativar tema escuro"
-        : "Ativar tema claro"
-    );
+    // localStorage indisponível: mantém o tema apenas na sessão.
   }
 }
-
 
 function initializeTheme() {
   let savedTheme = null;
 
   try {
-    savedTheme = localStorage.getItem(
-      "pereda-briefing-theme"
-    );
+    savedTheme = localStorage.getItem("pereda-briefing-theme");
   } catch {
     savedTheme = null;
   }
 
-  if (
-    savedTheme === "dark" ||
-    savedTheme === "light"
-  ) {
+  if (savedTheme === "light" || savedTheme === "dark") {
     applyTheme(savedTheme);
     return;
   }
 
-  const prefersLight =
-    window.matchMedia &&
-    window.matchMedia(
-      "(prefers-color-scheme: light)"
-    ).matches;
+  const prefersLight = window.matchMedia(
+    "(prefers-color-scheme: light)"
+  ).matches;
 
-  applyTheme(
-    prefersLight
-      ? "light"
-      : "dark"
-  );
-}
-
-
-if (themeToggle) {
-  themeToggle.addEventListener(
-    "click",
-    () => {
-      const currentTheme =
-        document.documentElement.dataset.theme === "light"
-          ? "light"
-          : "dark";
-
-      applyTheme(
-        currentTheme === "light"
-          ? "dark"
-          : "light"
-      );
-    }
-  );
+  applyTheme(prefersLight ? "light" : "dark");
 }
 
 initializeTheme();
 
+themeToggle?.addEventListener("click", () => {
+  const currentTheme =
+    document.documentElement.dataset.theme || "dark";
+
+  applyTheme(
+    currentTheme === "dark"
+      ? "light"
+      : "dark"
+  );
+});
 
 /* ---------------------------------------------------------
    PROGRESS
    --------------------------------------------------------- */
 
 function updateProgress() {
-  const percentage =
-    Math.round(
-      (currentStep / TOTAL_STEPS) * 100
-    );
+  const percentage = Math.round(
+    (currentStep / TOTAL_STEPS) * 100
+  );
 
   if (currentStepLabel) {
     currentStepLabel.textContent =
-      `Etapa ${currentStep} de ${TOTAL_STEPS}`;
+      String(currentStep).padStart(2, "0");
   }
 
   if (progressPercent) {
@@ -171,64 +98,68 @@ function updateProgress() {
     progressFill.style.width =
       `${percentage}%`;
   }
-
-  const progressTrack =
-    document.querySelector(
-      ".progress-track"
-    );
-
-  if (progressTrack) {
-    progressTrack.setAttribute(
-      "aria-valuenow",
-      String(percentage)
-    );
-  }
 }
-
 
 /* ---------------------------------------------------------
-   STEP VISIBILITY
+   STEP POSITION
    --------------------------------------------------------- */
 
-function updateNavigation() {
-  if (prevButton) {
-    prevButton.hidden =
-      currentStep === 1;
-  }
+function keepNextStepInView(step) {
+  if (!step) return;
 
-  if (nextButton) {
-    nextButton.hidden =
-      currentStep === TOTAL_STEPS;
-  }
+  const heading =
+    step.querySelector(".step-heading");
 
-  if (submitButton) {
-    submitButton.hidden =
-      currentStep !== TOTAL_STEPS;
-  }
+  const target = heading || step;
+
+  const header =
+    document.querySelector(".briefing-header");
+
+  const headerHeight =
+    header?.getBoundingClientRect().height || 0;
+
+  const targetTop =
+    target.getBoundingClientRect().top +
+    window.scrollY;
+
+  const offset =
+    window.innerWidth <= 800
+      ? headerHeight + 28
+      : headerHeight + 54;
+
+  window.scrollTo({
+    top: Math.max(
+      0,
+      targetTop - offset
+    ),
+    behavior: "smooth"
+  });
 }
 
+/* ---------------------------------------------------------
+   SHOW STEP
+   --------------------------------------------------------- */
 
-function showStep(stepNumber) {
+function showStep(stepNumber, shouldScroll = true) {
   currentStep = Math.min(
     Math.max(stepNumber, 1),
     TOTAL_STEPS
   );
 
   steps.forEach((step) => {
-    const stepValue =
+    const stepNumberValue =
       Number(step.dataset.step);
 
-    const isActive =
-      stepValue === currentStep;
+    const active =
+      stepNumberValue === currentStep;
 
     step.classList.toggle(
       "active",
-      isActive
+      active
     );
   });
 
   updateProgress();
-  updateNavigation();
 
   const activeStep =
     steps.find(
@@ -237,35 +168,31 @@ function showStep(stepNumber) {
         currentStep
     );
 
-  if (activeStep) {
-    const heading =
-      activeStep.querySelector(
-        ".step-heading h2"
-      );
-
-    /*
-      IMPORTANTE:
-      O foco é mantido no novo título sem
-      deslocar a página.
-    */
-    if (heading) {
-      try {
-        heading.focus({
-          preventScroll: true
-        });
-      } catch {
-        heading.focus();
-      }
-    }
+  if (
+    shouldScroll &&
+    activeStep
+  ) {
+    requestAnimationFrame(() => {
+      keepNextStepInView(activeStep);
+    });
   }
-}
 
+  requestAnimationFrame(() => {
+    activeStep
+      ?.querySelector(".step-heading h2")
+      ?.focus({
+        preventScroll: true
+      });
+  });
+}
 
 /* ---------------------------------------------------------
    VALIDATION HELPERS
    --------------------------------------------------------- */
 
 function clearErrors(step) {
+  if (!step) return;
+
   step
     .querySelectorAll(".field.error")
     .forEach((field) => {
@@ -275,29 +202,27 @@ function clearErrors(step) {
   step
     .querySelectorAll(".field-error")
     .forEach((error) => {
-      error.textContent = "";
+      error.remove();
     });
 
   clearStepAlert(step);
 }
 
-
 function clearStepAlert(step) {
   step
-    .querySelectorAll(".step-alert")
+    ?.querySelectorAll(".step-alert")
     .forEach((alert) => {
       alert.remove();
     });
 }
 
+function showStepAlert(anchorElement, message) {
+  if (!anchorElement) return;
 
-function showStepAlert(anchorEl, message) {
   const step =
-    anchorEl.closest(".form-step");
+    anchorElement.closest(".form-step");
 
-  if (!step) {
-    return;
-  }
+  if (!step) return;
 
   clearStepAlert(step);
 
@@ -305,35 +230,36 @@ function showStepAlert(anchorEl, message) {
     document.createElement("div");
 
   alert.className = "step-alert";
-  alert.setAttribute(
-    "role",
-    "alert"
-  );
-
+  alert.setAttribute("role", "alert");
   alert.textContent = message;
 
-  anchorEl.insertAdjacentElement(
+  anchorElement.insertAdjacentElement(
     "afterend",
     alert
   );
 }
 
-
 function addError(field, message) {
-  if (!field) {
-    return;
-  }
+  if (!field) return;
 
-  field.classList.add("error");
+  const wrapper =
+    field.closest(".field");
+
+  if (!wrapper) return;
+
+  wrapper.classList.add("error");
 
   const error =
-    field.querySelector(".field-error");
+    document.createElement("span");
 
-  if (error) {
-    error.textContent = message;
-  }
+  error.className = "field-error";
+  error.textContent = message;
+
+  field.insertAdjacentElement(
+    "afterend",
+    error
+  );
 }
-
 
 /* ---------------------------------------------------------
    VALIDATION
@@ -347,9 +273,7 @@ function validateStep(stepNumber) {
         stepNumber
     );
 
-  if (!step) {
-    return false;
-  }
+  if (!step) return true;
 
   clearErrors(step);
 
@@ -370,43 +294,38 @@ function validateStep(stepNumber) {
         "businessDescription"
       );
 
-    if (!company.value.trim()) {
+    if (!company?.value.trim()) {
       addError(
-        company.parentElement,
+        company,
         "Informe o nome da empresa."
       );
-
       valid = false;
     }
 
-    if (!segment.value.trim()) {
+    if (!segment?.value.trim()) {
       addError(
-        segment.parentElement,
+        segment,
         "Informe o segmento."
       );
-
       valid = false;
     }
 
-    if (!location.value.trim()) {
+    if (!location?.value.trim()) {
       addError(
-        location.parentElement,
-        "Informe a cidade ou região."
+        location,
+        "Informe a localização."
       );
-
       valid = false;
     }
 
-    if (!description.value.trim()) {
+    if (!description?.value.trim()) {
       addError(
-        description.parentElement,
-        "Conte brevemente sobre a empresa."
+        description,
+        "Conte brevemente sobre o negócio."
       );
-
       valid = false;
     }
   }
-
 
   if (stepNumber === 2) {
     const selectedProject =
@@ -416,45 +335,45 @@ function validateStep(stepNumber) {
 
     if (!selectedProject) {
       showStepAlert(
-        step.querySelector(".choice-list"),
-        "Selecione uma opção para continuar."
+        step.querySelector(".step-heading"),
+        "Selecione o tipo de projeto."
       );
 
       valid = false;
     }
 
     if (
-      selectedProject &&
-      selectedProject.value === "Outro"
+      selectedProject?.value === "Outro" &&
+      !projectOther?.value.trim()
     ) {
-      if (!projectOther.value.trim()) {
-        addError(
-          projectOther.parentElement,
-          "Descreva brevemente o projeto."
-        );
-
-        valid = false;
-      }
-    }
-  }
-
-
-  if (stepNumber === 3) {
-    const goals =
-      step.querySelectorAll(
-        'input[name="goals"]:checked'
-      );
-
-    if (!goals.length) {
-      showStepAlert(
-        step.querySelector(".goal-grid"),
-        "Selecione pelo menos um objetivo."
+      addError(
+        projectOther,
+        "Descreva o tipo de projeto."
       );
 
       valid = false;
     }
   }
 
+  if (stepNumber === 3) {
+    const goals =
+      Array.from(
+        step.querySelectorAll(
+          'input[name="goals"]:checked'
+        )
+      );
+
+    if (!goals.length) {
+      showStepAlert(
+        step.querySelector(".goal-grid") ||
+          step.querySelector(".choice-list") ||
+          step.querySelector(".step-heading"),
+        "Selecione pelo menos um objetivo."
+      );
+
+      valid = false;
+    }
+  }
 
   if (stepNumber === 4) {
     const presence =
@@ -464,14 +383,15 @@ function validateStep(stepNumber) {
 
     if (!presence) {
       showStepAlert(
-        step.querySelector(".segmented"),
-        "Selecione uma opção para continuar."
+        step.querySelector(".segmented") ||
+          step.querySelector(".choice-list") ||
+          step.querySelector(".step-heading"),
+        "Informe como está a presença digital atual."
       );
 
       valid = false;
     }
   }
-
 
   if (stepNumber === 6) {
     const name =
@@ -488,24 +408,22 @@ function validateStep(stepNumber) {
         "contactConsent"
       );
 
-    if (!name.value.trim()) {
+    if (!name?.value.trim()) {
       addError(
-        name.parentElement,
+        name,
         "Informe seu nome."
       );
-
       valid = false;
     }
 
     const emailPattern =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!email.value.trim()) {
+    if (!email?.value.trim()) {
       addError(
-        email.parentElement,
+        email,
         "Informe seu e-mail."
       );
-
       valid = false;
     } else if (
       !emailPattern.test(
@@ -513,27 +431,25 @@ function validateStep(stepNumber) {
       )
     ) {
       addError(
-        email.parentElement,
+        email,
         "Informe um e-mail válido."
       );
-
       valid = false;
     }
 
-    if (!phone.value.trim()) {
+    if (!phone?.value.trim()) {
       addError(
-        phone.parentElement,
-        "Informe seu WhatsApp ou telefone."
+        phone,
+        "Informe seu telefone."
       );
-
       valid = false;
     }
 
-    if (!consent.checked) {
+    if (!consent?.checked) {
       showStepAlert(
-        document.querySelector(
-          ".consent-field"
-        ),
+        step.querySelector(".consent") ||
+          step.querySelector(".consent-field") ||
+          step.querySelector(".step-heading"),
         "Autorize o contato para enviar o briefing."
       );
 
@@ -543,55 +459,6 @@ function validateStep(stepNumber) {
 
   return valid;
 }
-
-
-/* ---------------------------------------------------------
-   PROJECT OTHER
-   --------------------------------------------------------- */
-
-function updateProjectOther() {
-  const selected =
-    document.querySelector(
-      'input[name="projectType"]:checked'
-    );
-
-  const isOther =
-    selected &&
-    selected.value === "Outro";
-
-  if (projectOtherWrapper) {
-    projectOtherWrapper.hidden =
-      !isOther;
-  }
-
-  if (!isOther && projectOther) {
-    projectOther.value = "";
-
-    const error =
-      projectOther.parentElement
-        .querySelector(".field-error");
-
-    projectOther.parentElement
-      .classList.remove("error");
-
-    if (error) {
-      error.textContent = "";
-    }
-  }
-}
-
-
-document
-  .querySelectorAll(
-    'input[name="projectType"]'
-  )
-  .forEach((input) => {
-    input.addEventListener(
-      "change",
-      updateProjectOther
-    );
-  });
-
 
 /* ---------------------------------------------------------
    NAVIGATION
@@ -609,13 +476,18 @@ document
           return;
         }
 
-        showStep(
-          currentStep + 1
-        );
+        if (
+          currentStep <
+          TOTAL_STEPS
+        ) {
+          showStep(
+            currentStep + 1,
+            true
+          );
+        }
       }
     );
   });
-
 
 document
   .querySelectorAll(".prev-step")
@@ -623,61 +495,45 @@ document
     button.addEventListener(
       "click",
       () => {
-        showStep(
-          currentStep - 1
-        );
+        if (
+          currentStep > 1
+        ) {
+          showStep(
+            currentStep - 1,
+            true
+          );
+        }
       }
     );
   });
 
-
 /* ---------------------------------------------------------
-   ENTER
+   OTHER PROJECT TYPE
    --------------------------------------------------------- */
 
-form.addEventListener(
-  "keydown",
-  (event) => {
-    if (
-      event.key !== "Enter" ||
-      event.shiftKey
-    ) {
-      return;
-    }
+document
+  .querySelectorAll(
+    'input[name="projectType"]'
+  )
+  .forEach((radio) => {
+    radio.addEventListener(
+      "change",
+      () => {
+        const isOther =
+          radio.checked &&
+          radio.value === "Outro";
 
-    const target =
-      event.target;
+        if (projectOtherWrapper) {
+          projectOtherWrapper.hidden =
+            !isOther;
+        }
 
-    if (
-      target instanceof HTMLTextAreaElement ||
-      target instanceof HTMLSelectElement
-    ) {
-      return;
-    }
-
-    const activeStep =
-      steps.find(
-        (step) =>
-          Number(step.dataset.step) ===
-          currentStep
-      );
-
-    if (!activeStep) {
-      return;
-    }
-
-    const nextButtonInStep =
-      activeStep.querySelector(
-        ".next-step"
-      );
-
-    if (nextButtonInStep) {
-      event.preventDefault();
-      nextButtonInStep.click();
-    }
-  }
-);
-
+        if (!isOther && projectOther) {
+          projectOther.value = "";
+        }
+      }
+    );
+  });
 
 /* ---------------------------------------------------------
    PAYLOAD
@@ -689,11 +545,6 @@ function getPayload() {
       'input[name="projectType"]:checked'
     );
 
-  const presence =
-    document.querySelector(
-      'input[name="presence"]:checked'
-    );
-
   const goals =
     Array.from(
       document.querySelectorAll(
@@ -703,15 +554,20 @@ function getPayload() {
       (input) => input.value
     );
 
+  const presence =
+    document.querySelector(
+      'input[name="presence"]:checked'
+    );
+
   return {
     source: "pereda-dev-briefing",
     version: 1,
-    submittedAt: new Date().toISOString(),
+    submittedAt:
+      new Date().toISOString(),
 
-    hp:
-      hpField
-        ? hpField.value.trim()
-        : "",
+    hp: hpField
+      ? hpField.value.trim()
+      : "",
 
     business: {
       company:
@@ -837,19 +693,17 @@ function getPayload() {
   };
 }
 
-
 /* ---------------------------------------------------------
    SUBMIT
    --------------------------------------------------------- */
 
-form.addEventListener(
+form?.addEventListener(
   "submit",
   async (event) => {
     event.preventDefault();
 
-    if (
-      !validateStep(TOTAL_STEPS)
-    ) {
+    if (!validateStep(6)) {
+      showStep(6, true);
       return;
     }
 
@@ -883,25 +737,13 @@ form.addEventListener(
           }
         );
 
-      let data = null;
+      const data =
+        await response.json();
 
-      try {
-        data =
-          await response.json();
-      } catch {
-        data = null;
-      }
-
-      if (
-        !response.ok ||
-        !data ||
-        !data.success
-      ) {
+      if (!response.ok) {
         throw new Error(
-          data &&
-          data.error
-            ? data.error
-            : "Não foi possível enviar o briefing."
+          data?.error ||
+            "Não foi possível enviar o briefing."
         );
       }
 
@@ -911,17 +753,18 @@ form.addEventListener(
 
       if (successPanel) {
         successPanel.hidden = false;
-
-        try {
-          successPanel.focus({
-            preventScroll: true
-          });
-        } catch {
-          successPanel.focus();
-        }
       }
 
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
     } catch (error) {
+      console.error(
+        "Erro ao enviar briefing:",
+        error
+      );
+
       if (loadingPanel) {
         loadingPanel.hidden = true;
       }
@@ -935,30 +778,69 @@ form.addEventListener(
             currentStep
         );
 
-      if (activeStep) {
-        const heading =
-          activeStep.querySelector(
-            ".step-heading"
-          );
-
-        if (heading) {
-          showStepAlert(
-            heading,
-            error instanceof Error
-              ? error.message
-              : "Não foi possível enviar o briefing."
-          );
-        }
-      }
+      showStepAlert(
+        activeStep?.querySelector(
+          ".step-heading"
+        ),
+        error?.message ||
+          "Não foi possível enviar o briefing. Tente novamente."
+      );
     }
   }
 );
 
+/* ---------------------------------------------------------
+   ENTER = CONTINUAR
+   --------------------------------------------------------- */
+
+form?.addEventListener(
+  "keydown",
+  (event) => {
+    if (
+      event.key !== "Enter" ||
+      event.shiftKey
+    ) {
+      return;
+    }
+
+    const target =
+      event.target;
+
+    if (
+      target instanceof
+        HTMLTextAreaElement ||
+      target instanceof
+        HTMLSelectElement
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const activeStep =
+      steps.find(
+        (step) =>
+          Number(step.dataset.step) ===
+          currentStep
+      );
+
+    const nextButton =
+      activeStep?.querySelector(
+        ".next-step"
+      );
+
+    if (nextButton) {
+      nextButton.click();
+    }
+  }
+);
 
 /* ---------------------------------------------------------
    INITIAL STATE
    --------------------------------------------------------- */
 
-updateProjectOther();
 updateProgress();
-showStep(currentStep);
+showStep(
+  currentStep,
+  false
+);
